@@ -2,9 +2,12 @@ from datetime import datetime, timedelta
 from airflow.sdk import DAG
 from airflow.providers.standard.operators.bash import BashOperator
 
-PROJECT_DIR = "/Users/sarvatarshansankar20/projects/saas-analytics-elt"
-DBT_PROJECT_DIR = f"{PROJECT_DIR}/dbt_project"
-DBT_VENV_BIN = f"{PROJECT_DIR}/dbt_venv/bin"
+# Inside the Docker container, these paths are set by the volume mounts
+# in docker-compose.yml. No dbt_venv here — dbt is installed directly
+# into the container's Python environment via the Dockerfile.
+AIRFLOW_HOME = "/opt/airflow"
+DBT_PROJECT_DIR = f"{AIRFLOW_HOME}/dbt_project"
+DATA_GENERATOR_DIR = f"{AIRFLOW_HOME}/data_generator"
 
 default_args = {
     "retries": 2,
@@ -25,22 +28,22 @@ with DAG(
 
     generate_data = BashOperator(
         task_id="generate_data",
-        bash_command=f"cd {PROJECT_DIR} && {DBT_VENV_BIN}/python data_generator/generate_data.py",
+        bash_command=f"cd {AIRFLOW_HOME} && python data_generator/generate_data.py",
     )
 
     dbt_seed = BashOperator(
         task_id="dbt_seed",
-        bash_command=f"cd {DBT_PROJECT_DIR} && {DBT_VENV_BIN}/dbt seed",
+        bash_command=f"cd {DBT_PROJECT_DIR} && dbt seed --profiles-dir .",
     )
 
     dbt_run = BashOperator(
         task_id="dbt_run",
-        bash_command=f"cd {DBT_PROJECT_DIR} && {DBT_VENV_BIN}/dbt run",
+        bash_command=f"cd {DBT_PROJECT_DIR} && dbt run --profiles-dir .",
     )
 
     dbt_test = BashOperator(
         task_id="dbt_test",
-        bash_command=f"cd {DBT_PROJECT_DIR} && {DBT_VENV_BIN}/dbt test",
+        bash_command=f"cd {DBT_PROJECT_DIR} && dbt test --profiles-dir .",
     )
 
     generate_data >> dbt_seed >> dbt_run >> dbt_test
