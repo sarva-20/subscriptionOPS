@@ -1,0 +1,34 @@
+name: dbt CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  dbt-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dbt_project
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-duckdb==1.11.0 faker
+
+      - name: Generate synthetic data
+        working-directory: .
+        run: python data_generator/generate_data.py
+
+      - name: Run dbt build (seed + run + test)
+        run: dbt build --profiles-dir .
