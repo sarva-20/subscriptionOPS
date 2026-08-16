@@ -19,3 +19,4 @@ simple_auth_manager_passwords.json.generated
 # OS
 .DS_Store
 EOFdbt_project/.user.yml
+airflow/airflow.cfg
