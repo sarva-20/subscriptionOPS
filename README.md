@@ -1,4 +1,4 @@
-# 📊 SaaS Analytics ELT Pipeline
+# 📊 SubscriptionOps
 
 A production-style ELT project that simulates the analytics backbone of a SaaS business — from synthetic customer and billing events to trusted executive metrics like MRR, active users, and churn.
 
