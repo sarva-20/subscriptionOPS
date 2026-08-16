@@ -1,63 +1,212 @@
-<div align=*center*>
-
 # 📊 SaaS Analytics ELT Pipeline
 
-*An end-to-end, open-source data pipeline simulating the analytics backbone of a SaaS company — transforming raw event logs into high-impact **MRR** and churn metrics.*
+A production-style ELT project that simulates the analytics backbone of a SaaS business — from synthetic customer and billing events to trusted executive metrics like MRR, active users, and churn.
 
-[![Python](https://img.shields.io/badge/Python-3.10+-**3776AB**?style=for-the-badge&logo=python&logoColor=white)](https://[www.python.org/](https://www.python.org/)) [![dbt](https://img.shields.io/badge/dbt-Core-**FF694B**?style=for-the-badge&logo=dbt&logoColor=white)](https://[www.getdbt.com/](https://www.getdbt.com/)) [![DuckDB](https://img.shields.io/badge/DuckDB-Latest-**FFF000**?style=for-the-badge&logo=duckdb&logoColor=black)](https://duckdb.org/) [![Apache Airflow](https://img.shields.io/badge/Apache_Airflow-2.x-**017CEE**?style=for-the-badge&logo=apacheairflow&logoColor=white)](https://airflow.apache.org/) [![Docker](https://img.shields.io/badge/Docker-Containerized-**2496ED**?style=for-the-badge&logo=docker&logoColor=white)](https://[www.docker.com/](https://www.docker.com/)) [![CI](https://img.shields.io/badge/GitHub_Actions-Automated_Testing-**2088FF**?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![dbt](https://img.shields.io/badge/dbt-Core-FF694B?style=for-the-badge&logo=dbt&logoColor=white)](https://www.getdbt.com/)
+[![DuckDB](https://img.shields.io/badge/DuckDB-Latest-FFF000?style=for-the-badge&logo=duckdb&logoColor=black)](https://duckdb.org/)
+[![Airflow](https://img.shields.io/badge/Apache_Airflow-2.x-017CEE?style=for-the-badge&logo=apacheairflow&logoColor=white)](https://airflow.apache.org/)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![CI](https://img.shields.io/badge/GitHub_Actions-Automated_Testing-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
 
-</div>
+## Overview
 
----
+This repository models a realistic SaaS analytics platform using synthetic data, dbt transformations, and Airflow orchestration. It is designed to showcase how raw operational signals can be transformed into product and finance metrics that support retention, growth, and customer health analysis.
 
-## 📌 Executive Summary
+The pipeline generates realistic customer, subscription, payment, and usage behavior across a multi-month time horizon, then transforms that data into reusable analytics tables and business logic for analysis.
 
-This project simulates a production-grade data pipeline for a SaaS product. It dynamically generates realistic user, subscription, and billing data, cleans and transforms raw logs, and builds executive-ready data marts to track **Active Users**, **Monthly Recurring Revenue (**MRR**)**, and **Churn**.
+## Why this project
 
-> [!**NOTE**] > **Key Highlight — Granular Churn Attribution** > Standard metrics lump all customer losses together. This pipeline automatically isolates **Voluntary Churn** (customer choice) from **Involuntary Churn** (failed payment retries). Voluntary churn requires product/retention updates; involuntary churn requires payment retry optimization.
+Modern SaaS teams need dependable operational metrics that distinguish between:
 
----
+- product-driven retention signals,
+- billing-related churn,
+- active customer health,
+- and recurring revenue performance.
 
-## 🏗️ Pipeline Architecture
+This project focuses on those patterns in a clean, modular, and easy-to-understand architecture.
 
-The data flows cleanly through modular layer transformations, where each layer strictly depends on the previous stage.
+## Core capabilities
 
-┌─────────────────┐       ┌─────────────────┐       ┌──────────────────────┐       ┌─────────────────┐│  Raw **CSV** Seeds  │ ────> │ Staging Models  │ ────> │ Intermediate Logic   │ ────> │   Data Marts    ││ (Fake Data Gen) │       │ (Light Cleanup) │       │ (Subscription State) │       │ (Final Analytics)│└─────────────────┘       └─────────────────┘       └──────────────────────┘       └─────────────────┘
-| Layer | Responsibility | Key Output Tables |
-| :--- | :--- | :--- |
-| **Raw Seeds** | Python (`faker`) generated transactional data | `raw_users`, `raw_subscriptions`, `raw_payments` |
-| **Staging** | Renaming columns, casting types, zero business logic | `stg_users`, `stg_subscriptions`, `stg_payments` |
-| **Intermediate**| Calculation of active periods & billing windows | `int_subscription_periods`, `int_payment_failures` |
-| **Marts** | Final aggregated analytics tables for querying | `dim_users`, `fct_mrr`, `fct_user_activity`, `fct_churn` |
+- Synthetic SaaS dataset generation using Python and Faker
+- dbt-based staging, intermediate, and mart layers
+- Coverage for active users, MRR, churn, and customer lifecycle logic
+- Clear separation between voluntary and involuntary churn
+- Orchestration via Apache Airflow
+- Dockerized local execution for rapid onboarding
+- Automated dbt quality checks and CI validation
 
----
+## Business logic
 
-## ⚙️ How It Works
+### Retention and churn modeling
 
-### 🎲 Real-World Synthetic Data Generation
+The project distinguishes between two primary churn categories:
 
-`data_generator/generate_data.py` uses `faker` to build **~**500** fake users** spanning **18 months** with realistic behaviors:
-- Tiered plans: *Free*, *Pro*, and *Enterprise*.
-- ~30% overall churn rate.
-- **Pre-churn activity drop**: Engagement gradually fades in the weeks leading up to cancellation, mimicking real customer behavior.
-- Real-world payment processing errors (failed credit cards/retries).
+- Voluntary churn: a customer cancels intentionally
+- Involuntary churn: cancellation follows failed payment or billing friction
 
-### 💡 Voluntary vs. Involuntary Churn Logic
+This allows teams to isolate product/retention issues from payment and billing problems, which is often a critical gap in basic revenue reporting.
 
-```math \text{Monthly Churn Rate} = \frac{\text{Subscriptions Churned in Month}}{\text{Active Subscriptions at Start of Month}} When a subscription terminates, the model evaluates payment logs:Involuntary Churn: At least one payment failed in the 60 days prior to termination. (Billing infrastructure failure).Voluntary Churn: No payment failures prior to termination. (Customer proactively canceled).🚀 Quickstart GuideOption 1: Docker (Recommended — One Command)Run the full stack containerized with Airflow and dbt pre-configured:Bashdocker compose up --build Accessing the Airflow Orchestration Interface:Retrieve the auto-generated credentials:Bashdocker compose exec airflow cat /opt/airflow/simple_auth_manager_passwords.json.generated Open [http://localhost:**8080**](http://localhost:**8080**) in your browser.Log in with username admin and the generated password.Unpause and trigger the saas_analytics_elt **DAG**.Option 2: Local Execution (dbt **CLI** + Python)If you prefer to run the data transformations directly without Docker or Airflow:Bash# 1. Setup virtual environment & dependencies python -m venv venv source venv/bin/activate  # On Windows: venv\Scripts\activate pip install dbt-duckdb faker
+### Example metric logic
 
-# 2. Generate raw synthetic datasets
+Monthly churn rate can be expressed as:
+
+$$
+\text{Monthly Churn Rate} = \frac{\text{Subscriptions churned in month}}{\text{Active subscriptions at start of month}}
+$$
+
+The model evaluates payment signals near the point of cancellation, enabling a more accurate interpretation of customer loss and retention risk.
+
+## Architecture
+
+The pipeline follows a layered ELT structure:
+
+```text
+Raw CSV Seeds
+    ↓
+Staging Models
+    ↓
+Intermediate Logic
+    ↓
+Analytics Marts
+```
+
+| Layer | Responsibility | Example outputs |
+| --- | --- | --- |
+| Raw Seeds | Synthetic operational data generation | `raw_users`, `raw_subscriptions`, `raw_payments` |
+| Staging | Standardize and clean inbound data | `stg_users`, `stg_subscriptions`, `stg_payments` |
+| Intermediate | Subscription windows, billing activity, and churn attribution | `int_subscription_periods`, `int_payment_failures` |
+| Marts | Business-ready analytics tables | `dim_users`, `fct_mrr`, `fct_user_activity`, `fct_churn` |
+
+## What the pipeline produces
+
+The project is built to answer common SaaS revenue and retention questions such as:
+
+- How much recurring revenue is active each month?
+- Which customers are still engaged?
+- Which churn events were voluntary vs. involuntary?
+- Which customers are slipping before cancellation?
+- Are payment failures driving churn behavior?
+
+## Data generation
+
+The synthetic data generator creates realistic SaaS events across a multi-month time horizon, including:
+
+- Free, Pro, and Enterprise plan tiers
+- User lifecycle segmentation
+- Subscription start and end events
+- Payment retries and billing friction
+- Pre-churn activity declines
+- Subscription cancellations with realistic context
+
+## Project structure
+
+```text
+saas-analytics-elt/
+├── data_generator/
+│   └── generate_data.py              # Generates realistic SaaS datasets
+├── dbt_project/
+│   ├── models/
+│   │   ├── staging/
+│   │   ├── intermediate/
+│   │   └── marts/
+│   ├── seeds/
+│   ├── tests/
+│   └── dbt_project.yml
+├── airflow/
+│   └── dags/
+├── Dockerfile
+├── docker-compose.yml
+├── .github/workflows/
+├── requirements.txt
+├── README.md
+└── LICENSE
+```
+
+## Quick start
+
+### Option 1: Docker (recommended)
+
+Run the full stack with Airflow and dbt configured in a single workflow:
+
+```bash
+docker compose up --build
+```
+
+Then open the Airflow UI at:
+
+```text
+http://localhost:8080
+```
+
+Retrieve the generated admin credentials:
+
+```bash
+docker compose exec airflow cat /opt/airflow/simple_auth_manager_passwords.json.generated
+```
+
+Log in with the generated username and password, then unpause and trigger the DAG.
+
+### Option 2: Local execution
+
+If you prefer to run the transformation layer directly:
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install dbt-duckdb faker
 
 python data_generator/generate_data.py
 
-# 3. Execute dbt seeds, transformations, and assertions
+cd dbt_project
+dbt seed
+dbt run
+dbt test
 
-cd dbt_project dbt seed dbt run dbt test
+dbt show --select fct_churn --limit 20
+```
 
-# 4. Preview final metrics
+## Data quality and testing
 
-dbt show --select fct_churn --limit 20 🧪 Data Quality & Automated TestingThe project includes 26+ automated dbt tests running on every build and CI push:Generic Integrity Tests: Primary key uniqueness, non-null checks, foreign key referential integrity.Custom Business Rule Assertions:Subscription end date must be $\ge$ start date.**MRR** values can never fall below zero.Users cannot hold multiple overlapping active subscriptions.Calculated monthly churn rates must fall strictly between 0% and **100**%.📂 Project StructurePlaintextsaas-analytics-elt/ ├── data_generator/         # Python script creating realistic synthetic data ├── dbt_project/            # Complete dbt transformation setup │   ├── seeds/              # Target directory for generated raw CSVs │   ├── models/ │   │   ├── staging/        # 1:1 cleanup & standardization of raw tables │   │   ├── intermediate/   # Complex business logic & active window modeling │   │   └── marts/          # Final reporting tables (dim_users, fct_mrr, fct_churn, etc.) │   └── tests/              # Custom **SQL** assertions enforcing business rules ├── airflow/dags/           # **DAG** definition orchestrating seed -> run -> test ├── Dockerfile              # Unified container definition (Airflow + dbt) ├── docker-compose.yml      # Multi-container orchestration setup └── .github/workflows/ci.yml # Automated CI pipeline triggered on GitHub push
+This project includes business-rule and integrity checks for reliable outputs, including:
 
----
+- primary key uniqueness
+- null validation
+- referential integrity checks
+- subscription validity checks
+- non-negative MRR validation
+- no overlapping active subscriptions
+- churn-rate range validation between 0% and 100%
 
-Review the updated **README** formatting. Does the structure, visual hierarchy, or badges need any adjustments, or would you like to add/modify any sections?
+These checks ensure the final data models remain trustworthy for reporting and analysis.
+
+## Tech stack
+
+- Python
+- dbt Core
+- DuckDB
+- Apache Airflow
+- Docker
+- GitHub Actions
+
+## Roadmap
+
+Planned enhancements include:
+
+- richer product usage cohorts
+- executive dashboard exports
+- more advanced retention segmentation
+- additional warehouse compatibility
+- optional BI visualization layer
+
+## License
+
+This project is licensed under the MIT License. See the license file for details.
+
+## Contributing
+
+Contributions are welcome. If you want to improve the data model, expand the synthetic data realism, or strengthen the test coverage, open a pull request with a clear summary of the change.
+
+## Contact
+
+For project discussions, suggestions, or collaboration opportunities, open an issue or start a discussion in the repository.
