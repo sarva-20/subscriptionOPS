@@ -166,6 +166,20 @@ dbt test
 dbt show --select fct_churn --limit 20
 ```
 
+### Option 3: Dashboard
+
+After building the dbt project, launch the read-only dashboard:
+
+```bash
+pip install -r dashboard/requirements.txt
+streamlit run dashboard/app.py
+```
+
+The dashboard reads `dbt_project/dev.duckdb` and the recorded dbt results. It shows
+the four pipeline steps, current MRR and activity metrics, churn breakdowns, model
+row counts, and the latest dbt test status. Use `SUBSCRIPTIONOPS_DB` to point it at
+another DuckDB file.
+
 ## Data quality and testing
 
 This project includes business-rule and integrity checks for reliable outputs, including:
